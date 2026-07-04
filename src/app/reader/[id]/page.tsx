@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { Book, Note, Message, Highlight, Conversation } from "@/types";
+import { Book, Note, Message, Conversation } from "@/types";
 import PDFViewer from "@/components/PDFViewer";
 import ChatPanel from "@/components/ChatPanel";
 import NotesPanel from "@/components/NotesPanel";
@@ -33,7 +33,6 @@ export default function ReaderPage() {
   const [activePanel, setActivePanel] = useState<SidePanel>("chat");
   const [focusMode, setFocusMode] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -55,7 +54,6 @@ export default function ReaderPage() {
       await Promise.all([
         loadBook(),
         loadNotes(),
-        loadHighlights(),
         loadOrCreateConversation(),
       ]);
       setLoadingPage(false);
@@ -85,20 +83,6 @@ export default function ReaderPage() {
       .order("created_at", { ascending: false });
 
     if (data) setNotes(data as Note[]);
-  };
-
-  const loadHighlights = async () => {
-    const { data, error } = await supabase
-      .from("highlights")
-      .select("*")
-      .eq("book_id", bookId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.warn("Highlights table may not exist yet:", error.message);
-      return;
-    }
-    if (data) setHighlights(data as Highlight[]);
   };
 
   const loadConversations = async () => {
@@ -331,40 +315,6 @@ export default function ReaderPage() {
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
   };
 
-  const handleHighlight = async () => {
-    if (!selectedText.trim()) return;
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("highlights")
-      .insert({
-        user_id: user.id,
-        book_id: bookId,
-        page_number: currentPage,
-        text: selectedText.trim(),
-        color: "#FFD700",
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Failed to save highlight:", error.message);
-      alert(
-        "Failed to save highlight. Make sure you've run the highlights table SQL in your Supabase SQL Editor."
-      );
-      return;
-    }
-
-    if (data) {
-      setHighlights((prev) => [...prev, data as Highlight]);
-    }
-    setSelectedText("");
-  };
-
   if (loadingPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -471,9 +421,6 @@ export default function ReaderPage() {
             onPageChange={savePageProgress}
             onDocumentLoad={handleDocumentLoad}
             onPageText={setPageText}
-            highlights={highlights}
-            onHighlight={handleHighlight}
-            selectedText={selectedText}
           />
         </div>
 
@@ -487,7 +434,6 @@ export default function ReaderPage() {
                 currentPage={currentPage}
                 onSend={handleSendMessage}
                 onClearSelection={() => setSelectedText("")}
-                onHighlight={handleHighlight}
                 loading={chatLoading}
                 conversations={conversations}
                 currentConversationId={conversationId}

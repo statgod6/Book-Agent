@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Message, Conversation } from "@/types";
-import { Send, X, Sparkles, Bot, User, Loader2, Highlighter, Plus, History, MessageCircle } from "lucide-react";
+import { Send, X, Sparkles, Bot, User, Loader2, Plus, History, MessageCircle } from "lucide-react";
 import clsx from "clsx";
 
 interface ChatPanelProps {
@@ -11,7 +11,6 @@ interface ChatPanelProps {
   currentPage: number;
   onSend: (content: string) => void;
   onClearSelection: () => void;
-  onHighlight: () => void;
   loading: boolean;
   conversations: Conversation[];
   currentConversationId: string | null;
@@ -25,7 +24,6 @@ export default function ChatPanel({
   currentPage,
   onSend,
   onClearSelection,
-  onHighlight,
   loading,
   conversations,
   currentConversationId,
@@ -235,13 +233,6 @@ export default function ChatPanel({
               <X className="w-3 h-3" />
             </button>
           </div>
-          <button
-            onClick={onHighlight}
-            className="w-full py-1.5 bg-gold/20 hover:bg-gold/30 border border-gold/30 rounded-lg text-xs text-gold-700 font-medium transition flex items-center justify-center gap-1.5"
-          >
-            <Highlighter className="w-3.5 h-3.5" />
-            Highlight
-          </button>
         </div>
       )}
 

@@ -8,9 +8,7 @@ import {
   ZoomIn,
   ZoomOut,
   Loader2,
-  Highlighter,
 } from "lucide-react";
-import type { Highlight } from "@/types";
 
 // Use CDN worker for reliability
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -21,16 +19,6 @@ interface PDFViewerProps {
   onPageChange: (page: number) => void;
   onDocumentLoad?: (numPages: number) => void;
   onPageText?: (text: string) => void;
-  highlights?: Highlight[];
-  onHighlight?: () => void;
-  selectedText?: string;
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 }
 
 export default function PDFViewer({
@@ -39,9 +27,6 @@ export default function PDFViewer({
   onPageChange,
   onDocumentLoad,
   onPageText,
-  highlights = [],
-  onHighlight,
-  selectedText = "",
 }: PDFViewerProps) {
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.2);
@@ -72,27 +57,6 @@ export default function PDFViewer({
 
   const goToNextPage = () => {
     if (currentPage < numPages) onPageChange(currentPage + 1);
-  };
-
-  // Custom text renderer to apply highlights
-  const customTextRenderer = (textItem: { str: string }) => {
-    const text = textItem.str;
-    if (!text || !text.trim()) return escapeHtml(text);
-
-    const pageHighlights = highlights.filter(
-      (h) => h.page_number === currentPage
-    );
-
-    // Check if this text fragment is part of any highlight
-    for (const highlight of pageHighlights) {
-      if (highlight.text.includes(text.trim()) && text.trim().length > 2) {
-        return `<span style="background-color: rgba(255, 215, 0, 0.35); border-radius: 2px;">${escapeHtml(
-          text
-        )}</span>`;
-      }
-    }
-
-    return escapeHtml(text);
   };
 
   return (
@@ -136,29 +100,6 @@ export default function PDFViewer({
         >
           <ZoomIn className="w-4 h-4" />
         </button>
-
-        {onHighlight && (
-          <>
-            <div className="w-px h-5 bg-gray-200" />
-            <button
-              onClick={onHighlight}
-              disabled={!selectedText}
-              className={`p-1 rounded transition flex items-center gap-1 ${
-                selectedText
-                  ? "text-amber-600 hover:bg-amber-50 bg-amber-50"
-                  : "text-gray-300 cursor-not-allowed"
-              }`}
-              title={
-                selectedText
-                  ? "Highlight selected text"
-                  : "Select text first, then click to highlight"
-              }
-            >
-              <Highlighter className="w-4 h-4" />
-              <span className="text-xs font-medium">Highlight</span>
-            </button>
-          </>
-        )}
       </div>
 
       {/* PDF Document */}
@@ -187,7 +128,6 @@ export default function PDFViewer({
             className="pdf-page shadow-2xl shadow-black/50"
             renderTextLayer={true}
             renderAnnotationLayer={true}
-            customTextRenderer={customTextRenderer}
             onLoadSuccess={handlePageLoad}
           />
         </Document>

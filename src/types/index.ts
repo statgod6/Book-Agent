@@ -38,13 +38,3 @@ export interface Message {
   selected_text?: string;
   created_at: string;
 }
-
-export interface Highlight {
-  id: string;
-  user_id: string;
-  book_id: string;
-  page_number: number;
-  text: string;
-  color: string;
-  created_at: string;
-}
