@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { Message, Conversation } from "@/types";
 import { Send, X, Sparkles, Bot, User, Loader2, Plus, History, MessageCircle } from "lucide-react";
 import clsx from "clsx";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ChatPanelProps {
   messages: Message[];
@@ -170,7 +172,15 @@ export default function ChatPanel({
                 </div>
               )}
               <div className="whitespace-pre-wrap break-words">
-                {msg.content}
+                {msg.role === "assistant" ? (
+                  <div className="prose-chat">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  msg.content
+                )}
               </div>
               {msg.page_context && (
                 <div className="mt-1 text-[10px] opacity-50">
