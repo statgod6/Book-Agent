@@ -171,7 +171,7 @@ export default function ChatPanel({
                   {msg.selected_text.length > 120 ? "..." : ""}&rdquo;
                 </div>
               )}
-              <div className="whitespace-pre-wrap break-words">
+              <div className="break-words">
                 {msg.role === "assistant" ? (
                   <div className="prose-chat">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -179,7 +179,7 @@ export default function ChatPanel({
                     </ReactMarkdown>
                   </div>
                 ) : (
-                  msg.content
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
                 )}
               </div>
               {msg.page_context && (
