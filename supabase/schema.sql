@@ -50,6 +50,17 @@ CREATE TABLE IF NOT EXISTS messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Highlights table
+CREATE TABLE IF NOT EXISTS highlights (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  book_id UUID REFERENCES books(id) ON DELETE CASCADE NOT NULL,
+  page_number INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  color TEXT DEFAULT '#FFD700',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================
 -- ROW LEVEL SECURITY
 -- ============================================
@@ -58,6 +69,7 @@ ALTER TABLE books ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE highlights ENABLE ROW LEVEL SECURITY;
 
 -- Books policies
 CREATE POLICY "Users can view own books" ON books FOR SELECT USING (auth.uid() = user_id);
@@ -88,12 +100,17 @@ CREATE POLICY "Users can delete own messages" ON messages FOR DELETE USING (
   conversation_id IN (SELECT id FROM conversations WHERE user_id = auth.uid())
 );
 
+-- Highlights policies
+CREATE POLICY "Users can view own highlights" ON highlights FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own highlights" ON highlights FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can delete own highlights" ON highlights FOR DELETE USING (auth.uid() = user_id);
+
 -- ============================================
 -- STORAGE BUCKET FOR PDFs
 -- ============================================
 
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('pdfs', 'pdfs', false)
+VALUES ('pdfs', 'pdfs', true)
 ON CONFLICT (id) DO NOTHING;
 
 CREATE POLICY "Users can upload PDFs" ON storage.objects FOR INSERT WITH CHECK (

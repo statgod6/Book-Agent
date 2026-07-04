@@ -51,14 +51,14 @@ export default function NotesPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <StickyNote className="w-4 h-4 text-gold" />
-          <span className="font-semibold text-white text-sm">My Notes</span>
+          <span className="font-semibold text-gray-900 text-sm">My Notes</span>
         </div>
         <button
           onClick={() => setIsCreating(!isCreating)}
-          className="p-1 text-gray-400 hover:text-white transition"
+          className="p-1 text-gray-500 hover:text-gray-900 transition"
           title="Add note"
         >
           {isCreating ? (
@@ -71,7 +71,7 @@ export default function NotesPanel({
 
       {/* Create Note Form */}
       {isCreating && (
-        <div className="p-4 border-b border-white/5 bg-gold/5">
+        <div className="p-4 border-b border-gray-200 bg-gold/5">
           <div className="text-xs text-gold mb-2 font-medium">
             New note for Page {currentPage}
           </div>
@@ -80,14 +80,14 @@ export default function NotesPanel({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Note title (optional)"
-            className="w-full mb-2 px-3 py-2 bg-ink/50 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-gold transition placeholder:text-gray-600"
+            className="w-full mb-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-gold transition placeholder:text-gray-400"
           />
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write your understanding here..."
             rows={4}
-            className="w-full px-3 py-2 bg-ink/50 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-gold transition placeholder:text-gray-600 resize-none"
+            className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-gold transition placeholder:text-gray-400 resize-none"
           />
           <div className="flex gap-2 mt-2">
             <button
@@ -100,7 +100,7 @@ export default function NotesPanel({
             </button>
             <button
               onClick={handleCancel}
-              className="px-3 py-2 bg-surface/50 border border-white/10 rounded-lg text-sm text-gray-400 hover:text-white transition"
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 hover:text-gray-900 transition"
             >
               Cancel
             </button>
@@ -139,8 +139,8 @@ export default function NotesPanel({
         {notes.length === 0 && !isCreating && (
           <div className="text-center py-12">
             <StickyNote className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">No notes yet</p>
-            <p className="text-gray-500 text-xs mt-1">
+            <p className="text-gray-500 text-sm">No notes yet</p>
+            <p className="text-gray-400 text-xs mt-1">
               Click + to write your understanding
             </p>
           </div>
@@ -170,11 +170,11 @@ function NoteCard({
   };
 
   return (
-    <div className="note-card bg-surface/50 border border-white/5 rounded-xl p-3 group">
+    <div className="note-card bg-gray-50 border border-gray-200 rounded-xl p-3 group">
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="flex-1 min-w-0">
           {note.title && (
-            <h4 className="text-white text-sm font-medium truncate">
+            <h4 className="text-gray-900 text-sm font-medium truncate">
               {note.title}
             </h4>
           )}
@@ -205,7 +205,7 @@ function NoteCard({
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
-      <p className="text-gray-300 text-xs whitespace-pre-wrap break-words mt-1">
+      <p className="text-gray-700 text-xs whitespace-pre-wrap break-words mt-1">
         {note.content}
       </p>
     </div>

@@ -5,11 +5,18 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { Book, Note, Message, OpenRouterModel } from "@/types";
+import { Book, Note, Message, Highlight } from "@/types";
 import PDFViewer from "@/components/PDFViewer";
 import ChatPanel from "@/components/ChatPanel";
 import NotesPanel from "@/components/NotesPanel";
-import { MessageSquare, StickyNote, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  MessageSquare,
+  StickyNote,
+  ArrowLeft,
+  Loader2,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
 import clsx from "clsx";
 
 type SidePanel = "chat" | "notes" | null;
@@ -24,14 +31,12 @@ export default function ReaderPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedText, setSelectedText] = useState("");
   const [activePanel, setActivePanel] = useState<SidePanel>("chat");
+  const [focusMode, setFocusMode] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [chatLoading, setChatLoading] = useState(false);
-  const [models, setModels] = useState<OpenRouterModel[]>([]);
-  const [selectedModel, setSelectedModel] = useState(
-    "anthropic/claude-3.5-sonnet"
-  );
   const [loadingPage, setLoadingPage] = useState(true);
 
   // Check auth + load initial data
@@ -45,23 +50,16 @@ export default function ReaderPage() {
         return;
       }
 
-      await Promise.all([loadBook(), loadNotes(), loadOrCreateConversation()]);
+      await Promise.all([
+        loadBook(),
+        loadNotes(),
+        loadHighlights(),
+        loadOrCreateConversation(),
+      ]);
       setLoadingPage(false);
     };
     init();
   }, [bookId]);
-
-  // Fetch available models
-  useEffect(() => {
-    fetch("/api/models")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.models) {
-          setModels(data.models);
-        }
-      })
-      .catch((err) => console.error("Failed to load models:", err));
-  }, []);
 
   const loadBook = async () => {
     const { data } = await supabase
@@ -87,13 +85,22 @@ export default function ReaderPage() {
     if (data) setNotes(data as Note[]);
   };
 
+  const loadHighlights = async () => {
+    const { data } = await supabase
+      .from("highlights")
+      .select("*")
+      .eq("book_id", bookId)
+      .order("created_at", { ascending: true });
+
+    if (data) setHighlights(data as Highlight[]);
+  };
+
   const loadOrCreateConversation = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Try to load existing conversation
     const { data: existing } = await supabase
       .from("conversations")
       .select("*")
@@ -124,7 +131,6 @@ export default function ReaderPage() {
 
     setConversationId(convId);
 
-    // Load messages for this conversation
     const { data: msgs } = await supabase
       .from("messages")
       .select("*")
@@ -137,14 +143,12 @@ export default function ReaderPage() {
   const savePageProgress = useCallback(
     async (page: number) => {
       setCurrentPage(page);
-      // Update in background
       supabase.from("books").update({ current_page: page }).eq("id", bookId);
     },
     [bookId, supabase]
   );
 
   const handleDocumentLoad = async (numPages: number) => {
-    // Save total pages if not set
     if (book && book.total_pages !== numPages) {
       await supabase
         .from("books")
@@ -161,7 +165,7 @@ export default function ReaderPage() {
     }
   };
 
-  const handleSendMessage = async (content: string, model?: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!conversationId) return;
 
     const userMsg: Message = {
@@ -179,7 +183,6 @@ export default function ReaderPage() {
     setSelectedText("");
     setChatLoading(true);
 
-    // Save user message to Supabase
     await supabase.from("messages").insert({
       conversation_id: conversationId,
       role: "user",
@@ -200,23 +203,26 @@ export default function ReaderPage() {
           selectedText: currentSelectedText,
           currentPage,
           bookTitle: book?.title,
-          model: model || selectedModel,
         }),
       });
 
       const data = await res.json();
 
+      const aiContent =
+        data.content ||
+        data.error ||
+        "Sorry, I couldn't process that. Please try again.";
+
       const aiMsg: Message = {
         id: crypto.randomUUID(),
         conversation_id: conversationId,
         role: "assistant",
-        content: data.content || "Sorry, I couldn't process that.",
+        content: aiContent,
         created_at: new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, aiMsg]);
 
-      // Save AI message to Supabase
       await supabase.from("messages").insert({
         conversation_id: conversationId,
         role: "assistant",
@@ -263,9 +269,35 @@ export default function ReaderPage() {
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
   };
 
+  const handleHighlight = async () => {
+    if (!selectedText.trim()) return;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("highlights")
+      .insert({
+        user_id: user.id,
+        book_id: bookId,
+        page_number: currentPage,
+        text: selectedText.trim(),
+        color: "#FFD700",
+      })
+      .select()
+      .single();
+
+    if (data) {
+      setHighlights((prev) => [...prev, data as Highlight]);
+    }
+    setSelectedText("");
+  };
+
   if (loadingPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a1a]">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <Loader2 className="w-6 h-6 animate-spin text-accent" />
       </div>
     );
@@ -273,51 +305,81 @@ export default function ReaderPage() {
 
   if (!book) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0a0a1a]">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <p className="text-gray-500">Book not found</p>
       </div>
     );
   }
 
+  // In focus mode, hide side panel regardless of activePanel
+  const showPanel = focusMode ? null : activePanel;
+
   return (
-    <div className="h-screen flex flex-col bg-[#0a0a1a]">
+    <div className="h-screen flex flex-col bg-gray-100">
       {/* Top Bar */}
-      <header className="h-14 border-b border-white/5 bg-ink/80 backdrop-blur-xl flex items-center px-4 gap-4 shrink-0">
+      <header className="h-14 border-b border-gray-200 bg-white flex items-center px-4 gap-4 shrink-0">
         <button
           onClick={() => router.push("/dashboard")}
-          className="text-gray-400 hover:text-white transition"
+          className="text-gray-600 hover:text-gray-900 transition"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-white font-semibold truncate flex-1">
+        <h1 className="text-gray-900 font-semibold truncate flex-1">
           {book.title}
         </h1>
         <span className="text-gray-500 text-sm">Page {currentPage}</span>
 
         <div className="flex gap-1 ml-4">
+          {/* Focus Mode Toggle */}
           <button
-            onClick={() =>
-              setActivePanel(activePanel === "chat" ? null : "chat")
-            }
+            onClick={() => setFocusMode(!focusMode)}
             className={clsx(
               "p-2 rounded-lg transition",
-              activePanel === "chat"
+              focusMode
+                ? "bg-gray-800 text-white"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+            )}
+            title={focusMode ? "Exit Focus Mode" : "Focus Mode"}
+          >
+            {focusMode ? (
+              <Minimize2 className="w-4 h-4" />
+            ) : (
+              <Maximize2 className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Chat Toggle */}
+          <button
+            onClick={() => {
+              setFocusMode(false);
+              setActivePanel(
+                activePanel === "chat" ? null : "chat"
+              );
+            }}
+            className={clsx(
+              "p-2 rounded-lg transition",
+              !focusMode && activePanel === "chat"
                 ? "bg-accent text-white"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
             )}
             title="AI Chat"
           >
             <MessageSquare className="w-4 h-4" />
           </button>
+
+          {/* Notes Toggle */}
           <button
-            onClick={() =>
-              setActivePanel(activePanel === "notes" ? null : "notes")
-            }
+            onClick={() => {
+              setFocusMode(false);
+              setActivePanel(
+                activePanel === "notes" ? null : "notes"
+              );
+            }}
             className={clsx(
               "p-2 rounded-lg transition",
-              activePanel === "notes"
+              !focusMode && activePanel === "notes"
                 ? "bg-gold text-ink"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
             )}
             title="Notes"
           >
@@ -330,7 +392,7 @@ export default function ReaderPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* PDF Viewer */}
         <div
-          className="flex-1 overflow-auto"
+          className="flex-1 overflow-auto bg-gray-100"
           onMouseUp={handleTextSelect}
         >
           <PDFViewer
@@ -338,23 +400,22 @@ export default function ReaderPage() {
             currentPage={currentPage}
             onPageChange={savePageProgress}
             onDocumentLoad={handleDocumentLoad}
+            highlights={highlights}
           />
         </div>
 
         {/* Side Panel */}
-        {activePanel && (
-          <div className="w-96 border-l border-white/5 bg-ink/30 flex flex-col overflow-hidden">
-            {activePanel === "chat" ? (
+        {showPanel && (
+          <div className="w-96 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
+            {showPanel === "chat" ? (
               <ChatPanel
                 messages={messages}
                 selectedText={selectedText}
                 currentPage={currentPage}
                 onSend={handleSendMessage}
                 onClearSelection={() => setSelectedText("")}
+                onHighlight={handleHighlight}
                 loading={chatLoading}
-                models={models}
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
               />
             ) : (
               <NotesPanel

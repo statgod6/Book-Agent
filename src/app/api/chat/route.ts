@@ -38,7 +38,7 @@ Guidelines:
           "X-Title": "BookMind",
         },
         body: JSON.stringify({
-          model: model || "anthropic/claude-3.5-sonnet",
+          model: "deepseek/deepseek-chat",
           messages: openRouterMessages,
           temperature: 0.7,
           max_tokens: 2048,

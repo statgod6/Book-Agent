@@ -39,12 +39,12 @@ export interface Message {
   created_at: string;
 }
 
-export interface OpenRouterModel {
+export interface Highlight {
   id: string;
-  name: string;
-  context_length: number;
-  pricing: {
-    prompt: string;
-    completion: string;
-  };
+  user_id: string;
+  book_id: string;
+  page_number: number;
+  text: string;
+  color: string;
+  created_at: string;
 }

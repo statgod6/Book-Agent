@@ -10,8 +10,8 @@
 }
 
 body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: #f3f4f6;
+  color: #1f2937;
 }
 
 ::-webkit-scrollbar {
@@ -30,9 +30,29 @@ body {
 }
 
 /* PDF page rendering */
+.pdf-page-container {
+  overflow: hidden;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
 .pdf-page canvas {
   max-width: 100%;
   height: auto !important;
+}
+
+/* Fix text layer overflow */
+.react-pdf__Page {
+  overflow: hidden;
+  max-width: 100%;
+}
+.react-pdf__Page__textContent {
+  overflow: hidden;
+  max-width: 100%;
+}
+.react-pdf__Page__textContent span {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* React-pdf text layer selection */
@@ -46,8 +66,8 @@ body {
   background: linear-gradient(135deg, #e94560, #c23152);
 }
 .chat-bubble-ai {
-  background: linear-gradient(135deg, #16213e, #1a1a3e);
-  border: 1px solid rgba(233, 69, 96, 0.15);
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
 }
 
 /* Note card hover */
