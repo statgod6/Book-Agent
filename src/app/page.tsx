@@ -43,24 +43,24 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a1a] via-[#16213e] to-[#0a0a1a]">
-      <div className="w-full max-w-md p-8">
+      <div className="w-full max-w-md p-4 sm:p-8">
         {/* Logo */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 mb-4">
-            <BookOpen className="w-10 h-10 text-accent" />
-            <h1 className="text-4xl font-bold text-white">
+            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-accent" />
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">
               Book<span className="text-accent">Mind</span>
             </h1>
           </div>
-          <p className="text-gray-400 flex items-center justify-center gap-2">
+          <p className="text-gray-400 flex items-center justify-center gap-2 text-sm sm:text-base">
             <Sparkles className="w-4 h-4 text-gold" />
             Read smarter with AI by your side
           </p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-surface/50 backdrop-blur-xl rounded-2xl p-8 border border-white/5">
-          <h2 className="text-xl font-semibold text-white mb-6">
+        <div className="bg-surface/50 backdrop-blur-xl rounded-2xl p-6 sm:p-8 border border-white/5">
+          <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6">
             {isSignUp ? "Create Account" : "Welcome Back"}
           </h2>
 
@@ -71,7 +71,7 @@ export default function AuthPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-ink/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-accent transition placeholder:text-gray-600"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-ink/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-accent transition placeholder:text-gray-600 text-sm sm:text-base"
                 placeholder="you@example.com"
               />
             </div>
@@ -84,7 +84,7 @@ export default function AuthPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-ink/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-accent transition placeholder:text-gray-600"
+                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-ink/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-accent transition placeholder:text-gray-600 text-sm sm:text-base"
                 placeholder="••••••••"
                 onKeyDown={(e) => e.key === "Enter" && handleAuth()}
               />
@@ -105,7 +105,7 @@ export default function AuthPage() {
             <button
               onClick={handleAuth}
               disabled={loading || !email || !password}
-              className="w-full py-3 bg-accent hover:bg-accent/90 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-2.5 sm:py-3 bg-accent hover:bg-accent/90 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50 text-sm sm:text-base"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

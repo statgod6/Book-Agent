@@ -16,6 +16,7 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
+  X,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -335,21 +336,23 @@ export default function ReaderPage() {
   const showPanel = focusMode ? null : activePanel;
 
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div className="h-[100dvh] flex flex-col bg-gray-100">
       {/* Top Bar */}
-      <header className="h-14 border-b border-gray-200 bg-white flex items-center px-4 gap-4 shrink-0">
+      <header className="h-14 border-b border-gray-200 bg-white flex items-center px-3 sm:px-4 gap-2 sm:gap-4 shrink-0 safe-top">
         <button
           onClick={() => router.push("/dashboard")}
-          className="text-gray-600 hover:text-gray-900 transition"
+          className="text-gray-600 hover:text-gray-900 transition shrink-0"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-gray-900 font-semibold truncate flex-1">
+        <h1 className="text-gray-900 font-semibold truncate flex-1 text-sm sm:text-base min-w-0">
           {book.title}
         </h1>
-        <span className="text-gray-500 text-sm">Page {currentPage}</span>
+        <span className="text-gray-500 text-xs sm:text-sm shrink-0 hidden xs:inline">
+          Page {currentPage}
+        </span>
 
-        <div className="flex gap-1 ml-4">
+        <div className="flex gap-1 shrink-0">
           {/* Focus Mode Toggle */}
           <button
             onClick={() => setFocusMode(!focusMode)}
@@ -409,7 +412,7 @@ export default function ReaderPage() {
       </header>
 
       {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* PDF Viewer */}
         <div
           className="flex-1 overflow-auto bg-gray-100"
@@ -424,9 +427,9 @@ export default function ReaderPage() {
           />
         </div>
 
-        {/* Side Panel */}
+        {/* Desktop Side Panel */}
         {showPanel && (
-          <div className="w-96 border-l border-gray-200 bg-white flex flex-col overflow-hidden">
+          <div className="hidden lg:flex w-96 border-l border-gray-200 bg-white flex-col overflow-hidden">
             {showPanel === "chat" ? (
               <ChatPanel
                 messages={messages}
@@ -449,6 +452,61 @@ export default function ReaderPage() {
               />
             )}
           </div>
+        )}
+
+        {/* Mobile Overlay Panel */}
+        {showPanel && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="lg:hidden fixed inset-0 bg-black/40 z-40 animate-fade-in"
+              onClick={() => setActivePanel(null)}
+            />
+            {/* Panel */}
+            <div className="lg:hidden fixed inset-x-0 bottom-0 top-14 z-50 bg-white flex flex-col animate-slide-up safe-bottom">
+              {/* Mobile close handle */}
+              <div className="flex justify-center py-1 shrink-0">
+                <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              </div>
+              <div className="flex-1 overflow-hidden flex flex-col">
+                {/* Mobile panel header with close */}
+                <div className="flex items-center justify-between px-4 pb-2 shrink-0">
+                  <span className="text-xs text-gray-400">
+                    {showPanel === "chat" ? "AI Companion" : "Notes"}
+                  </span>
+                  <button
+                    onClick={() => setActivePanel(null)}
+                    className="p-1 text-gray-400 hover:text-gray-900"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  {showPanel === "chat" ? (
+                    <ChatPanel
+                      messages={messages}
+                      selectedText={selectedText}
+                      currentPage={currentPage}
+                      onSend={handleSendMessage}
+                      onClearSelection={() => setSelectedText("")}
+                      loading={chatLoading}
+                      conversations={conversations}
+                      currentConversationId={conversationId}
+                      onNewChat={handleNewChat}
+                      onSwitchConversation={handleSwitchConversation}
+                    />
+                  ) : (
+                    <NotesPanel
+                      notes={notes}
+                      currentPage={currentPage}
+                      onSave={handleSaveNote}
+                      onDelete={handleDeleteNote}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

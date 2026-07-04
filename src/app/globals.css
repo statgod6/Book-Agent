@@ -12,6 +12,29 @@
 body {
   background: #f3f4f6;
   color: #1f2937;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area insets for mobile devices */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Hide scrollbar but keep scrollable */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Prevent text selection callout on iOS for UI elements */
+button, .no-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in chat and PDF */
+.prose-chat, .react-pdf__Page__textContent {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 ::-webkit-scrollbar {
@@ -41,7 +64,7 @@ body {
   height: auto !important;
 }
 
-/* Keep text layer aligned with canvas - do NOT override span positioning */
+/* Keep text layer aligned with canvas - let react-pdf control width */
 .react-pdf__Page {
   position: relative;
 }
@@ -49,7 +72,6 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
   overflow: hidden;
   user-select: text;
 }
@@ -76,6 +98,9 @@ body {
 .prose-chat {
   font-size: 0.875rem;
   line-height: 1.55;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 .prose-chat > *:first-child {
   margin-top: 0 !important;
@@ -140,6 +165,7 @@ body {
   padding: 0.6em 0.8em;
   border-radius: 8px;
   overflow-x: auto;
+  max-width: 100%;
   margin: 0 0 0.5em;
 }
 .prose-chat pre:last-child {
@@ -168,6 +194,9 @@ body {
   border-collapse: collapse;
   margin: 0 0 0.5em;
   font-size: 0.82em;
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
 }
 .prose-chat table:last-child {
   margin-bottom: 0;
@@ -210,4 +239,37 @@ body {
 }
 .typing-dot {
   animation: bounce-dot 1.4s infinite ease-in-out both;
+}
+
+/* Mobile: ensure PDF canvas fits screen width */
+@media (max-width: 768px) {
+  .pdf-page canvas {
+    width: 100% !important;
+    height: auto !important;
+  }
+  .pdf-page-container {
+    overflow-x: hidden;
+  }
+}
+
+/* Mobile: panel slide-in animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out;
+}
+
+/* Mobile: backdrop fade-in */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
 }

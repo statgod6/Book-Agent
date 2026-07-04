@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -8,6 +8,14 @@ export const metadata: Metadata = {
   title: "BookMind — AI-Powered Book Reader",
   description:
     "Read smarter with AI. Ask questions, take notes, understand deeply.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: "#e94560",
 };
 
 export default function RootLayout({
