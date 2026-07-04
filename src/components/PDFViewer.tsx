@@ -8,6 +8,7 @@ import {
   ZoomIn,
   ZoomOut,
   Loader2,
+  Highlighter,
 } from "lucide-react";
 import type { Highlight } from "@/types";
 
@@ -19,7 +20,10 @@ interface PDFViewerProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   onDocumentLoad?: (numPages: number) => void;
+  onPageText?: (text: string) => void;
   highlights?: Highlight[];
+  onHighlight?: () => void;
+  selectedText?: string;
 }
 
 function escapeHtml(text: string): string {
@@ -34,7 +38,10 @@ export default function PDFViewer({
   currentPage,
   onPageChange,
   onDocumentLoad,
+  onPageText,
   highlights = [],
+  onHighlight,
+  selectedText = "",
 }: PDFViewerProps) {
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.2);
@@ -42,6 +49,21 @@ export default function PDFViewer({
   const handleLoadSuccess = (pdf: { numPages: number }) => {
     setNumPages(pdf.numPages);
     if (onDocumentLoad) onDocumentLoad(pdf.numPages);
+  };
+
+  // Extract text content from the current page for AI context
+  const handlePageLoad = async (page: any) => {
+    if (!onPageText) return;
+    try {
+      const textContent = await page.getTextContent();
+      const text = textContent.items
+        .map((item: { str?: string }) => item.str || "")
+        .join(" ")
+        .trim();
+      onPageText(text);
+    } catch (e) {
+      console.error("Failed to extract page text:", e);
+    }
   };
 
   const goToPrevPage = () => {
@@ -114,6 +136,29 @@ export default function PDFViewer({
         >
           <ZoomIn className="w-4 h-4" />
         </button>
+
+        {onHighlight && (
+          <>
+            <div className="w-px h-5 bg-gray-200" />
+            <button
+              onClick={onHighlight}
+              disabled={!selectedText}
+              className={`p-1 rounded transition flex items-center gap-1 ${
+                selectedText
+                  ? "text-amber-600 hover:bg-amber-50 bg-amber-50"
+                  : "text-gray-300 cursor-not-allowed"
+              }`}
+              title={
+                selectedText
+                  ? "Highlight selected text"
+                  : "Select text first, then click to highlight"
+              }
+            >
+              <Highlighter className="w-4 h-4" />
+              <span className="text-xs font-medium">Highlight</span>
+            </button>
+          </>
+        )}
       </div>
 
       {/* PDF Document */}
@@ -143,6 +188,7 @@ export default function PDFViewer({
             renderTextLayer={true}
             renderAnnotationLayer={true}
             customTextRenderer={customTextRenderer}
+            onLoadSuccess={handlePageLoad}
           />
         </Document>
       </div>

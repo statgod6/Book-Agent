@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, selectedText, currentPage, bookTitle, model } =
+    const { messages, selectedText, currentPage, bookTitle, pageText } =
       await req.json();
 
     const systemPrompt = `You are BookMind, an intelligent reading companion helping the user understand a book.
 
 Book: "${bookTitle || "Unknown"}"
 Current Page: ${currentPage || "Unknown"}
+${pageText ? `\n--- Text content of page ${currentPage} ---\n${pageText.slice(0, 4000)}\n--- End of page text ---\n` : ""}
 ${selectedText ? `\nSelected text from the book:\n"${selectedText}"\n` : ""}
 
 Guidelines:
+- You have access to the text content of the page the user is currently reading.
+- When the user asks about the current page, use the page text provided above.
 - Be clear, insightful, and encouraging
 - Reference the selected text when answering
 - Use simple language to explain complex ideas

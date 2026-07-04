@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import { Book, Note, Message, Highlight } from "@/types";
+import { Book, Note, Message, Highlight, Conversation } from "@/types";
 import PDFViewer from "@/components/PDFViewer";
 import ChatPanel from "@/components/ChatPanel";
 import NotesPanel from "@/components/NotesPanel";
@@ -36,8 +36,10 @@ export default function ReaderPage() {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [loadingPage, setLoadingPage] = useState(true);
+  const [pageText, setPageText] = useState("");
 
   // Check auth + load initial data
   useEffect(() => {
@@ -86,13 +88,33 @@ export default function ReaderPage() {
   };
 
   const loadHighlights = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("highlights")
       .select("*")
       .eq("book_id", bookId)
       .order("created_at", { ascending: true });
 
+    if (error) {
+      console.warn("Highlights table may not exist yet:", error.message);
+      return;
+    }
     if (data) setHighlights(data as Highlight[]);
+  };
+
+  const loadConversations = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("book_id", bookId)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (data) setConversations(data as Conversation[]);
   };
 
   const loadOrCreateConversation = async () => {
@@ -100,6 +122,8 @@ export default function ReaderPage() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
+
+    await loadConversations();
 
     const { data: existing } = await supabase
       .from("conversations")
@@ -113,7 +137,7 @@ export default function ReaderPage() {
     let convId: string;
 
     if (existing) {
-      convId = (existing as { id: string }).id;
+      convId = (existing as Conversation).id;
     } else {
       const { data: newConv, error } = await supabase
         .from("conversations")
@@ -126,10 +150,47 @@ export default function ReaderPage() {
         .single();
 
       if (error || !newConv) return;
-      convId = (newConv as { id: string }).id;
+      convId = (newConv as Conversation).id;
+      await loadConversations();
     }
 
     setConversationId(convId);
+
+    const { data: msgs } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", convId)
+      .order("created_at", { ascending: true });
+
+    if (msgs) setMessages(msgs as Message[]);
+  };
+
+  const handleNewChat = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: newConv, error } = await supabase
+      .from("conversations")
+      .insert({
+        user_id: user.id,
+        book_id: bookId,
+        title: "New Chat",
+      })
+      .select()
+      .single();
+
+    if (error || !newConv) return;
+
+    setConversations((prev) => [newConv as Conversation, ...prev]);
+    setConversationId((newConv as Conversation).id);
+    setMessages([]);
+  };
+
+  const handleSwitchConversation = async (convId: string) => {
+    setConversationId(convId);
+    setMessages([]);
 
     const { data: msgs } = await supabase
       .from("messages")
@@ -203,6 +264,7 @@ export default function ReaderPage() {
           selectedText: currentSelectedText,
           currentPage,
           bookTitle: book?.title,
+          pageText,
         }),
       });
 
@@ -277,7 +339,7 @@ export default function ReaderPage() {
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("highlights")
       .insert({
         user_id: user.id,
@@ -288,6 +350,14 @@ export default function ReaderPage() {
       })
       .select()
       .single();
+
+    if (error) {
+      console.error("Failed to save highlight:", error.message);
+      alert(
+        "Failed to save highlight. Make sure you've run the highlights table SQL in your Supabase SQL Editor."
+      );
+      return;
+    }
 
     if (data) {
       setHighlights((prev) => [...prev, data as Highlight]);
@@ -400,7 +470,10 @@ export default function ReaderPage() {
             currentPage={currentPage}
             onPageChange={savePageProgress}
             onDocumentLoad={handleDocumentLoad}
+            onPageText={setPageText}
             highlights={highlights}
+            onHighlight={handleHighlight}
+            selectedText={selectedText}
           />
         </div>
 
@@ -416,6 +489,10 @@ export default function ReaderPage() {
                 onClearSelection={() => setSelectedText("")}
                 onHighlight={handleHighlight}
                 loading={chatLoading}
+                conversations={conversations}
+                currentConversationId={conversationId}
+                onNewChat={handleNewChat}
+                onSwitchConversation={handleSwitchConversation}
               />
             ) : (
               <NotesPanel

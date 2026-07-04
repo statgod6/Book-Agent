@@ -31,7 +31,7 @@ body {
 
 /* PDF page rendering */
 .pdf-page-container {
-  overflow: hidden;
+  overflow: auto;
   max-width: 100%;
   display: flex;
   justify-content: center;
@@ -41,18 +41,20 @@ body {
   height: auto !important;
 }
 
-/* Fix text layer overflow */
+/* Keep text layer aligned with canvas - do NOT override span positioning */
 .react-pdf__Page {
-  overflow: hidden;
-  max-width: 100%;
+  position: relative;
 }
 .react-pdf__Page__textContent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   overflow: hidden;
-  max-width: 100%;
+  user-select: text;
 }
 .react-pdf__Page__textContent span {
-  white-space: pre-wrap;
-  word-break: break-word;
+  color: transparent;
 }
 
 /* React-pdf text layer selection */
