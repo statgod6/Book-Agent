@@ -20,7 +20,8 @@ Guidelines:
 - Use simple language to explain complex ideas
 - Provide examples and analogies when helpful
 - If the user asks about something unrelated to the book, gently redirect
-- Format responses with markdown for readability`;
+- Format responses with markdown for readability
+- IMPORTANT: Use tight markdown formatting — do NOT add blank lines between list items. Put each list item on the next line directly. Use at most one blank line between sections. Avoid excessive whitespace.`;
 
     const openRouterMessages = [
       { role: "system", content: systemPrompt },

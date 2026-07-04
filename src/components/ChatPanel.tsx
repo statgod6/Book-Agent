@@ -7,6 +7,20 @@ import clsx from "clsx";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+/**
+ * Normalize AI markdown to prevent uneven spacing:
+ * - Collapse 3+ consecutive newlines to 2 (one paragraph break)
+ * - Tighten loose lists (remove blank lines between list items)
+ */
+function normalizeMarkdown(raw: string): string {
+  return raw
+    // Collapse 3+ newlines to exactly 2
+    .replace(/\n{3,}/g, "\n\n")
+    // Tighten loose lists: remove blank lines between consecutive list items
+    .replace(/(^[ \t]*[-*+]\s+.+)\n\n([ \t]*[-*+]\s+)/gm, "$1\n$2")
+    .replace(/(^[ \t]*\d+\.\s+.+)\n\n([ \t]*\d+\.\s+)/gm, "$1\n$2");
+}
+
 interface ChatPanelProps {
   messages: Message[];
   selectedText: string;
@@ -175,7 +189,7 @@ export default function ChatPanel({
                 {msg.role === "assistant" ? (
                   <div className="prose-chat">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {msg.content}
+                      {normalizeMarkdown(msg.content)}
                     </ReactMarkdown>
                   </div>
                 ) : (
