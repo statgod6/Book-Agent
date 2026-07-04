@@ -42,7 +42,7 @@ Guidelines:
           "X-Title": "BookMind",
         },
         body: JSON.stringify({
-          model: "deepseek/deepseek-chat",
+          model: "deepseek/deepseek-v4-pro",
           messages: openRouterMessages,
           temperature: 0.7,
           max_tokens: 2048,
