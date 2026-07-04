@@ -1,0 +1,135 @@
+"use client";
+
+import { useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Loader2,
+} from "lucide-react";
+
+// Use CDN worker for reliability
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
+interface PDFViewerProps {
+  fileUrl: string;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  onDocumentLoad?: (numPages: number) => void;
+}
+
+export default function PDFViewer({
+  fileUrl,
+  currentPage,
+  onPageChange,
+  onDocumentLoad,
+}: PDFViewerProps) {
+  const [numPages, setNumPages] = useState(0);
+  const [scale, setScale] = useState(1.2);
+
+  const handleLoadSuccess = (pdf: { numPages: number }) => {
+    setNumPages(pdf.numPages);
+    if (onDocumentLoad) onDocumentLoad(pdf.numPages);
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) onPageChange(currentPage - 1);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < numPages) onPageChange(currentPage + 1);
+  };
+
+  return (
+    <div className="flex flex-col items-center py-6 px-4">
+      {/* Controls */}
+      <div className="sticky top-0 z-10 bg-[#0a0a1a]/90 backdrop-blur-sm flex items-center gap-3 mb-6 px-4 py-2 rounded-full border border-white/5">
+        <button
+          onClick={goToPrevPage}
+          disabled={currentPage <= 1}
+          className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+
+        <span className="text-sm text-gray-300 min-w-[80px] text-center">
+          {currentPage} / {numPages}
+        </span>
+
+        <button
+          onClick={goToNextPage}
+          disabled={currentPage >= numPages}
+          className="p-1 text-gray-400 hover:text-white disabled:opacity-30 transition"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
+        <div className="w-px h-5 bg-white/10" />
+
+        <button
+          onClick={() => setScale((s) => Math.max(0.5, s - 0.2))}
+          className="p-1 text-gray-400 hover:text-white transition"
+        >
+          <ZoomOut className="w-4 h-4" />
+        </button>
+        <span className="text-xs text-gray-500 min-w-[40px] text-center">
+          {Math.round(scale * 100)}%
+        </span>
+        <button
+          onClick={() => setScale((s) => Math.min(3, s + 0.2))}
+          className="p-1 text-gray-400 hover:text-white transition"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* PDF Document */}
+      <Document
+        file={fileUrl}
+        onLoadSuccess={handleLoadSuccess}
+        loading={
+          <div className="flex items-center gap-2 text-gray-500 py-20">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Loading PDF...
+          </div>
+        }
+        error={
+          <div className="text-center py-20">
+            <p className="text-accent mb-2">Failed to load PDF</p>
+            <p className="text-gray-500 text-sm">
+              Make sure the file URL is accessible
+            </p>
+          </div>
+        }
+      >
+        <Page
+          pageNumber={currentPage}
+          scale={scale}
+          className="pdf-page shadow-2xl shadow-black/50"
+          renderTextLayer={true}
+          renderAnnotationLayer={true}
+        />
+      </Document>
+
+      {/* Bottom Navigation */}
+      <div className="mt-6 flex gap-2">
+        <button
+          onClick={goToPrevPage}
+          disabled={currentPage <= 1}
+          className="px-4 py-2 bg-surface/50 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-surface disabled:opacity-30 transition"
+        >
+          ← Previous
+        </button>
+        <button
+          onClick={goToNextPage}
+          disabled={currentPage >= numPages}
+          className="px-4 py-2 bg-surface/50 border border-white/10 rounded-lg text-sm text-gray-300 hover:bg-surface disabled:opacity-30 transition"
+        >
+          Next →
+        </button>
+      </div>
+    </div>
+  );
+}
